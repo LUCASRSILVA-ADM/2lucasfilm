@@ -1,0 +1,8 @@
+{
+  "name": "2LUCASFILM",
+  "description": "Portfólio cinematográfico de Lucas & Lucas, explorando destinos incríveis através das lentes.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
