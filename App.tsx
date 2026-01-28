@@ -1,41 +1,66 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import Documentaries from './components/Documentaries';
+import Featured from './components/Featured';
+import VerticalContent from './components/VerticalContent';
+import Usability from './components/Usability';
 import About from './components/About';
-import Skills from './components/Skills';
-import Projects from './components/Projects';
-import Contact from './components/Contact';
 
 const App: React.FC = () => {
-  return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden selection:bg-violet-500/40">
-      {/* Luzes de fundo violeta suaves */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-15%] left-[-15%] w-[70%] h-[70%] bg-violet-900/10 blur-[160px] rounded-full"></div>
-        <div className="absolute bottom-[-15%] right-[-15%] w-[70%] h-[70%] bg-purple-900/10 blur-[160px] rounded-full"></div>
-      </div>
+  const [activeSection, setActiveSection] = useState('home');
 
-      <main className="relative z-10">
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['home', 'documentaries', 'featured', 'vertical', 'usability', 'about'];
+      const current = sections.find(section => {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          // Adjust detection logic for better accuracy
+          return rect.top <= 200 && rect.bottom >= 200;
+        }
+        return false;
+      });
+      if (current) setActiveSection(current);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className="relative min-h-screen bg-black text-slate-100 overflow-x-hidden selection:bg-violet-500/40 font-inter">
+      <Navbar activeSection={activeSection} />
+
+      <main>
         <section id="home">
           <Hero />
         </section>
         
-        <section id="about" className="py-24 md:py-40">
+        <section id="documentaries" className="bg-black">
+          <Documentaries />
+        </section>
+
+        <section id="featured" className="bg-black">
+          <Featured />
+        </section>
+
+        <section id="vertical" className="bg-black">
+          <VerticalContent />
+        </section>
+
+        <section id="usability" className="bg-black">
+          <Usability />
+        </section>
+        
+        <section id="about" className="bg-black border-t border-white/5">
           <About />
         </section>
-        
-        <section id="skills" className="py-24 md:py-40 bg-slate-900/10 backdrop-blur-3xl border-y border-white/5">
-          <Skills />
-        </section>
-        
-        <section id="projects" className="py-24 md:py-40">
-          <Projects />
-        </section>
-        
-        <section id="contact" className="py-24 md:py-40 bg-slate-900/30">
-          <Contact />
-        </section>
       </main>
+      
+      {/* Footer and Chatbot removed per request */}
     </div>
   );
 };
