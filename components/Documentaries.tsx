@@ -87,6 +87,7 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
               muted={!isAudioEnabled} 
               autoPlay 
               playsInline
+              preload="auto"
               onPlay={() => window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: mainId } }))}
               className="w-full h-full object-cover brightness-75 group-hover:brightness-100 transition-all duration-1000"
             >
@@ -171,6 +172,7 @@ const DocItem = ({ doc, isAudioEnabled, parentExpanded }: any) => {
         loop 
         muted={!isAudioEnabled} 
         playsInline 
+        preload="auto"
         className={`w-full h-full object-cover transition-opacity duration-700 ${isPlaying ? 'opacity-100' : 'opacity-60'}`}
        >
           <source src={doc.url} type="video/mp4" />

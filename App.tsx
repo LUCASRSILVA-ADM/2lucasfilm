@@ -9,7 +9,6 @@ import Usability from './components/Usability';
 import About from './components/About';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import AIChatbot from './components/AIChatbot';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState('home');
@@ -75,12 +74,12 @@ const App: React.FC = () => {
           <About />
         </section>
 
-        <section id="contact" className="bg-black relative z-20">
+        {/* Seção de contato removida do mobile */}
+        <section id="contact" className="bg-black relative z-20 hidden lg:block">
           <Contact />
         </section>
       </main>
 
-      <AIChatbot />
       <Footer />
     </div>
   );

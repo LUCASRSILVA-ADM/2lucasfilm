@@ -6,7 +6,7 @@ const About: React.FC = () => {
   const foundersImageUrl = "https://res.cloudinary.com/dkzx2kuuu/image/upload/v1769632050/Gemini_Generated_Image_emh5gmemh5gmemh5_ahrljj.png";
 
   return (
-    <div className="container mx-auto px-6 max-w-7xl py-24">
+    <div className="container mx-auto px-6 max-w-7xl pt-2 pb-24">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24 items-center">
         {/* Founders Image */}
         <div className="relative aspect-square md:aspect-[4/5] overflow-hidden rounded-sm border border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.8)] group order-2 lg:order-1">
@@ -41,7 +41,7 @@ const About: React.FC = () => {
               <span className="text-white font-bold">2LUCASFILM</span> é a materialização de um olhar único sobre o mundo. Lucas R. Silva e Lucas A. Mota desbravam destinos e capturam a essência de cada momento, elevando o vídeo ao status de obra de arte.
             </p>
             <p>
-              Atendemos grandes personalidades como <span className="text-white font-semibold">José Roberto Marques, Pablo Marçal, Kaka Diniz e Luiza Possi</span>, construindo narrativas que impactam milhões através de um storytelling cinematográfico de elite.
+              Já atendemos grandes personalidades como José Roberto Marques, Pablo Marçal, Kaka Diniz e Luiza Possi, além de outras personalidades e empresários, construindo narrativas que impactam milhões através de um storytelling cinematográfico de elite.
             </p>
           </div>
           
