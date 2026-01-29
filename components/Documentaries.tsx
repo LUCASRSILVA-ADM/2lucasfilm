@@ -61,15 +61,15 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
   useEffect(() => {
     if (mainVideoRef.current) {
       if (isFullyVisible) {
-        // Se estiver no centro da tela e o áudio global estiver desbloqueado, toca com som
+        // Tenta iniciar com SOM ativado
         mainVideoRef.current.muted = false; 
         const playPromise = mainVideoRef.current.play();
         
         if (playPromise !== undefined) {
           playPromise.then(() => {
             window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: mainId } }));
-          }).catch(() => {
-            // Fallback: se o navegador bloquear som, tenta mudo
+          }).catch((err) => {
+            console.warn("Navegador bloqueou áudio automático. Fallback para mudo.", err);
             if (mainVideoRef.current) {
               mainVideoRef.current.muted = true;
               mainVideoRef.current.play().catch(() => {});
@@ -92,7 +92,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
       </div>
 
       <div className="space-y-12">
-        {/* Vídeo Principal - COM ÁUDIO ATIVADO NO AUTOPLAY */}
         <div className="max-w-5xl mx-auto">
           <div className="group relative aspect-video w-full bg-slate-900 overflow-hidden border border-white/10 shadow-2xl transition-transform duration-700 hover:scale-[1.01]">
             <video 
@@ -113,7 +112,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
               </h3>
             </div>
             
-            {/* Controle de Volume Manual */}
             <button 
               onClick={() => {
                 if (mainVideoRef.current) mainVideoRef.current.muted = !mainVideoRef.current.muted;
@@ -127,7 +125,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
           </div>
         </div>
 
-        {/* Galeria Expansível */}
         <div className="max-w-5xl mx-auto text-center">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}

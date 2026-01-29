@@ -22,9 +22,8 @@ const Hero: React.FC<HeroProps> = ({ isAudioEnabled }) => {
       const isMob = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
       setIsMobile(isMob);
       
-      // Verifica se o navegador exige permissão (iOS)
+      // Verifica se o navegador exige permissão (iOS 13+)
       if (isMob && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
-        // Verifica se já temos permissão
         setNeedsPermission(true);
       }
     };
@@ -54,26 +53,28 @@ const Hero: React.FC<HeroProps> = ({ isAudioEnabled }) => {
     };
   }, []);
 
-  // Lógica de Captura de Movimento
+  // Lógica de Captura de Movimento Refinada
   useEffect(() => {
+    // Se precisar de permissão, não ativa o listener ainda
     if (!isMobile || motionStarted || needsPermission) return;
 
     let lastX = 0, lastY = 0, lastZ = 0;
-    const threshold = 15; 
+    const threshold = 12; // Sensibilidade ajustada
     let lastTime = Date.now();
 
     const handleMotion = (event: DeviceMotionEvent) => {
       const currentTime = Date.now();
       if ((currentTime - lastTime) < 100) return;
 
-      const acc = event.accelerationIncludingGravity;
+      const acc = event.accelerationIncludingGravity || event.acceleration;
       if (!acc) return;
 
       const deltaX = Math.abs(lastX - (acc.x || 0));
       const deltaY = Math.abs(lastY - (acc.y || 0));
       const deltaZ = Math.abs(lastZ - (acc.z || 0));
 
-      if ((deltaX > threshold && deltaY > threshold) || (deltaX > threshold && deltaZ > threshold)) {
+      // Detecção de movimento brusco (Shake)
+      if (deltaX > threshold || deltaY > threshold || deltaZ > threshold) {
         handleInteraction();
       }
 
@@ -89,6 +90,8 @@ const Hero: React.FC<HeroProps> = ({ isAudioEnabled }) => {
 
   const handleInteraction = () => {
     if (motionStarted) return;
+    
+    // Inicia a transição visual
     setIsDissolving(true);
     
     if (videoRef.current) {
@@ -98,40 +101,40 @@ const Hero: React.FC<HeroProps> = ({ isAudioEnabled }) => {
       if (playPromise !== undefined) {
         playPromise.then(() => {
           window.dispatchEvent(new CustomEvent('video-playing', { detail: { id } }));
+          setMotionStarted(true);
         }).catch(err => {
-          console.warn("Autoplay block. Retrying on interaction...", err);
+          console.warn("Autoplay bloqueado. Tentando mudo primeiro...", err);
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().then(() => setMotionStarted(true));
+          }
         });
       }
     }
-
-    setTimeout(() => {
-      setMotionStarted(true);
-    }, 600);
   };
 
-  const handleManualActivatePermission = async () => {
+  const handleManualActivatePermission = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita disparar cliques indesejados
     if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
       try {
         const response = await (DeviceMotionEvent as any).requestPermission();
         if (response === 'granted') {
+          // Permissão concedida: Remove o toast e deixa o listener de movimento agir
           setNeedsPermission(false);
-          // Pequeno delay para os sensores estabilizarem
-          setTimeout(handleInteraction, 150);
+          console.log("Sensores habilitados. Aguardando movimento...");
         }
       } catch (e) {
-        console.error("Erro sensor:", e);
+        console.error("Erro ao solicitar permissão de sensores:", e);
       }
     }
   };
 
+  // Autoplay para desktop ou após o primeiro shake bem sucedido
   useEffect(() => {
     if (videoRef.current) {
       if (isVisible) {
         if (!isMobile || motionStarted) {
           videoRef.current.play().catch(() => {});
-          if (motionStarted) {
-            window.dispatchEvent(new CustomEvent('video-playing', { detail: { id } }));
-          }
         }
       } else {
         videoRef.current.pause();
@@ -154,20 +157,18 @@ const Hero: React.FC<HeroProps> = ({ isAudioEnabled }) => {
           <source src={videoUrl} type="video/mp4" />
         </video>
         
-        {/* Ativação Principal */}
+        {/* Camada de Instrução Central - Apenas o ícone de balanço */}
         {!motionStarted && (
           <div 
-            onClick={!needsPermission ? handleInteraction : undefined}
-            className={`absolute inset-0 z-50 flex flex-col items-center justify-center cursor-pointer transition-all duration-1000 ${isDissolving ? 'opacity-0 scale-150' : 'opacity-100'}`}
+            onClick={!isMobile ? handleInteraction : undefined}
+            className={`absolute inset-0 z-50 flex flex-col items-center justify-center transition-all duration-1000 ${isDissolving ? 'opacity-0 scale-150' : 'opacity-100'}`}
           >
             <div className="flex flex-col items-center gap-6">
-              {/* Ícone de Smartphone com Balanço Lateral Realista */}
               <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center animate-shake-lateral">
                 <div className="absolute inset-0 bg-violet-500/10 blur-3xl rounded-full"></div>
                 <svg className="w-full h-full text-violet-500 drop-shadow-[0_0_25px_rgba(139,92,246,0.9)]" viewBox="0 0 24 24" fill="none">
                   <rect x="7" y="2" width="10" height="20" rx="2" stroke="currentColor" strokeWidth="1.2" />
                   <circle cx="12" cy="19" r="0.8" fill="currentColor" />
-                  {/* Linhas de Movimento */}
                   <path d="M4 8C3 10 3 14 4 16" stroke="currentColor" strokeWidth="1" strokeLinecap="round" className="opacity-50" />
                   <path d="M1 9.5C0.5 10.5 0.5 13.5 1 14.5" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" className="opacity-30" />
                   <path d="M20 8C21 10 21 14 20 16" stroke="currentColor" strokeWidth="1" strokeLinecap="round" className="opacity-50" />
@@ -185,24 +186,22 @@ const Hero: React.FC<HeroProps> = ({ isAudioEnabled }) => {
           </div>
         )}
 
-        {/* Toast Inferior Discreto para Permissão (iOS) */}
+        {/* Toast de Permissão (Apenas aparece se necessário e não dá play) */}
         {needsPermission && !motionStarted && (
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-1000">
             <button 
               onClick={handleManualActivatePermission}
-              className="px-6 py-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full flex items-center gap-3 hover:bg-violet-600 transition-all group"
+              className="px-6 py-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center gap-3 hover:bg-violet-600 transition-all group"
             >
-              <span className="text-[9px] font-mono text-white/80 uppercase tracking-widest group-hover:text-white">
-                Ativar sensores de movimento
+              <span className="text-[9px] font-mono text-white uppercase tracking-widest">
+                HABILITAR CAPTURA DE MOVIMENTO
               </span>
-              <svg className="w-3 h-3 text-violet-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+              <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></div>
             </button>
           </div>
         )}
 
-        {/* Gradientes */}
+        {/* Gradientes de profundidade */}
         <div className="absolute inset-0 pointer-events-none z-10">
           <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-black/90 via-black/40 to-transparent"></div>
           <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
