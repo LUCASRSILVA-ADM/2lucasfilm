@@ -36,10 +36,10 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Detects if at least 50% of the container is visible
-        setIsFullyVisible(entry.isIntersecting && entry.intersectionRatio >= 0.5);
+        // Ativa somente quando o contêiner está pelo menos 60% visível (centro da tela)
+        setIsFullyVisible(entry.isIntersecting && entry.intersectionRatio >= 0.6);
       },
-      { threshold: [0, 0.5, 1.0] }
+      { threshold: [0, 0.3, 0.6, 1.0] }
     );
 
     if (containerRef.current) observer.observe(containerRef.current);
@@ -57,15 +57,24 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
     };
   }, []);
 
+  // Lógica de Autoplay e Áudio Automático
   useEffect(() => {
     if (mainVideoRef.current) {
       if (isFullyVisible) {
-        mainVideoRef.current.muted = true;
+        // Se estiver no centro da tela e o áudio global estiver desbloqueado, toca com som
+        mainVideoRef.current.muted = false; 
         const playPromise = mainVideoRef.current.play();
+        
         if (playPromise !== undefined) {
           playPromise.then(() => {
             window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: mainId } }));
-          }).catch(() => {});
+          }).catch(() => {
+            // Fallback: se o navegador bloquear som, tenta mudo
+            if (mainVideoRef.current) {
+              mainVideoRef.current.muted = true;
+              mainVideoRef.current.play().catch(() => {});
+            }
+          });
         }
       } else {
         mainVideoRef.current.pause();
@@ -83,20 +92,20 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
       </div>
 
       <div className="space-y-12">
-        {/* Main Video */}
+        {/* Vídeo Principal - COM ÁUDIO ATIVADO NO AUTOPLAY */}
         <div className="max-w-5xl mx-auto">
           <div className="group relative aspect-video w-full bg-slate-900 overflow-hidden border border-white/10 shadow-2xl transition-transform duration-700 hover:scale-[1.01]">
             <video 
               ref={mainVideoRef}
               loop 
-              muted 
               playsInline
               preload="auto"
-              className="w-full h-full object-cover brightness-75 group-hover:brightness-100 transition-all duration-1000 pointer-events-none"
+              className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-1000 pointer-events-none"
             >
               <source src={docs[0].url} type="video/mp4" />
             </video>
             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80 pointer-events-none"></div>
+            
             <div className="absolute bottom-8 left-8 space-y-2 pointer-events-none">
               <div className="font-mono text-[9px] text-violet-500 uppercase tracking-[0.6em]">{docs[0].tag}</div>
               <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">
@@ -104,6 +113,7 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
               </h3>
             </div>
             
+            {/* Controle de Volume Manual */}
             <button 
               onClick={() => {
                 if (mainVideoRef.current) mainVideoRef.current.muted = !mainVideoRef.current.muted;
@@ -117,7 +127,7 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
           </div>
         </div>
 
-        {/* Gallery */}
+        {/* Galeria Expansível */}
         <div className="max-w-5xl mx-auto text-center">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
