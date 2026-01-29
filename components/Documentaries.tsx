@@ -8,8 +8,12 @@ interface DocumentariesProps {
 const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFullyVisible, setIsFullyVisible] = useState(false);
+  const [showMainText, setShowMainText] = useState(true);
+  const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const mainVideoRef = useRef<HTMLVideoElement>(null);
+  const hideTimerRef = useRef<any>(null);
   const mainId = "main-doc-video";
 
   const docs = [
@@ -17,18 +21,28 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
       id: "main-doc",
       title: "Além Da Linha de Chegada",
       url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769190488/treiler_2_tct9i7.mp4",
+      poster: "https://res.cloudinary.com/dkzx2kuuu/image/upload/v1769632033/1_ljrbig.png",
       tag: "ORIGINAL DOC"
+    },
+    {
+      id: "trip-italia",
+      title: "TRIP ITALIA",
+      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769623637/NLJ_ddeqxn.mp4",
+      poster: "https://res.cloudinary.com/dkzx2kuuu/image/upload/v1769632869/1-homepage-1_t57lle.jpg",
+      tag: "TRAVEL FILM"
     },
     {
       id: "decor-campinas",
       title: "DECOR CAMPINAS",
-      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769630358/DECOR_CAMPINAS_tezxa2.mp4",
+      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769644373/YTDowncom_Shorts_Suite-Room-Interior-interiordesign-hotel_Media_C4q5DZZMbIE_001_720p_j3sy6s.mp4",
+      poster: "https://res.cloudinary.com/dkzx2kuuu/image/upload/v1769632036/2_b8rrjr.png",
       tag: "INTERIOR FILM"
     },
     {
       id: "lentes-viagem",
       title: "Lentes de Viagem",
       url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769631026/DDSD_nqo13r.mp4",
+      poster: "https://images.unsplash.com/photo-1492691523567-6170f0295da4?auto=format&fit=crop&q=80&w=1200",
       tag: "BEHIND THE SCENES"
     }
   ];
@@ -36,7 +50,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Ativa somente quando o contêiner está pelo menos 60% visível (centro da tela)
         setIsFullyVisible(entry.isIntersecting && entry.intersectionRatio >= 0.6);
       },
       { threshold: [0, 0.3, 0.6, 1.0] }
@@ -47,6 +60,7 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
     const handleOtherPlay = (e: any) => {
       if (e.detail.id !== mainId && mainVideoRef.current) {
         mainVideoRef.current.pause();
+        setShowMainText(true);
       }
     };
 
@@ -54,22 +68,27 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
     return () => {
       observer.disconnect();
       window.removeEventListener('video-playing', handleOtherPlay);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, []);
 
-  // Lógica de Autoplay e Áudio Automático
+  // Lógica de Autoplay, Áudio e Auto-Hide
   useEffect(() => {
     if (mainVideoRef.current) {
       if (isFullyVisible) {
-        // Tenta iniciar com SOM ativado
         mainVideoRef.current.muted = false; 
         const playPromise = mainVideoRef.current.play();
         
         if (playPromise !== undefined) {
           playPromise.then(() => {
             window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: mainId } }));
-          }).catch((err) => {
-            console.warn("Navegador bloqueou áudio automático. Fallback para mudo.", err);
+            
+            // Inicia timer para sumir texto após 3 segundos
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = setTimeout(() => {
+              setShowMainText(false);
+            }, 3000);
+          }).catch(() => {
             if (mainVideoRef.current) {
               mainVideoRef.current.muted = true;
               mainVideoRef.current.play().catch(() => {});
@@ -78,6 +97,7 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
         }
       } else {
         mainVideoRef.current.pause();
+        setShowMainText(true);
       }
     }
   }, [isFullyVisible]);
@@ -92,46 +112,70 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
       </div>
 
       <div className="space-y-12">
+        {/* Vídeo Principal */}
         <div className="max-w-5xl mx-auto">
-          <div className="group relative aspect-video w-full bg-slate-900 overflow-hidden border border-white/10 shadow-2xl transition-transform duration-700 hover:scale-[1.01]">
+          <div 
+            className="group relative aspect-video w-full bg-slate-900 overflow-hidden border border-white/10 shadow-2xl transition-transform duration-700 hover:scale-[1.01]"
+            onMouseEnter={() => setShowMainText(true)}
+            onMouseLeave={() => {
+               if (isFullyVisible && !mainVideoRef.current?.paused) {
+                 setTimeout(() => setShowMainText(false), 2000);
+               }
+            }}
+          >
             <video 
               ref={mainVideoRef}
               loop 
               playsInline
+              poster={docs[0].poster}
               preload="auto"
               className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-1000 pointer-events-none"
             >
               <source src={docs[0].url} type="video/mp4" />
             </video>
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80 pointer-events-none"></div>
             
-            <div className="absolute bottom-8 left-8 space-y-2 pointer-events-none">
+            {/* Gradiente e Textos com Auto-Hide */}
+            <div className={`absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent transition-opacity duration-1000 ${showMainText ? 'opacity-80' : 'opacity-0'}`}></div>
+            
+            <div className={`absolute bottom-8 left-8 space-y-2 pointer-events-none transition-all duration-1000 ${showMainText ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <div className="font-mono text-[9px] text-violet-500 uppercase tracking-[0.6em]">{docs[0].tag}</div>
               <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">
                 {docs[0].title}
               </h3>
             </div>
             
-            <button 
-              onClick={() => {
-                if (mainVideoRef.current) mainVideoRef.current.muted = !mainVideoRef.current.muted;
-              }}
-              className="absolute top-4 right-4 z-20 w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/10 hover:bg-violet-600 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-            </button>
+            {/* Controles Flutuantes */}
+            <div className={`absolute top-4 right-4 z-20 flex gap-2 transition-opacity duration-1000 ${showMainText ? 'opacity-100' : 'opacity-0'}`}>
+              <button 
+                onClick={() => {
+                  if (mainVideoRef.current) mainVideoRef.current.muted = !mainVideoRef.current.muted;
+                }}
+                className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/10 hover:bg-violet-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              </button>
+              <button 
+                onClick={() => setFullscreenVideo(docs[0].url)}
+                className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/10 hover:bg-violet-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Galeria Expansível */}
         <div className="max-w-5xl mx-auto text-center">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
             className="group inline-flex items-center gap-4 px-10 py-5 bg-white/5 border border-white/10 hover:border-violet-500 hover:bg-violet-600/10 transition-all duration-500 rounded-full"
           >
             <span className="text-[10px] font-mono font-bold uppercase tracking-[0.4em] text-white">
-              {isExpanded ? 'Recolher Galeria' : 'Mais Produções'}
+              {isExpanded ? 'Recolher Galeria' : 'Ver Todas Produções'}
             </span>
             <div className={`transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`}>
               <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,30 +186,65 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
 
           <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 transition-all duration-1000 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100 mt-16' : 'max-h-0 opacity-0 overflow-hidden mt-0'}`}>
             {docs.slice(1).map((doc, idx) => (
-              <DocItem key={idx} doc={doc} isAudioEnabled={isAudioEnabled} />
+              <DocItem key={idx} doc={doc} onExpand={() => setFullscreenVideo(doc.url)} />
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Fullscreen Overlay com Gesto de Fechar */}
+      {fullscreenVideo && (
+        <FullscreenPlayer url={fullscreenVideo} onClose={() => setFullscreenVideo(null)} />
+      )}
+    </div>
+  );
+};
+
+const FullscreenPlayer = ({ url, onClose }: { url: string; onClose: () => void }) => {
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+
+  const onTouchStart = (e: React.TouchEvent) => setStartY(e.touches[0].clientY);
+  const onTouchMove = (e: React.TouchEvent) => setCurrentY(e.touches[0].clientY);
+  const onTouchEnd = () => {
+    if (Math.abs(currentY - startY) > 100) onClose();
+    setStartY(0);
+    setCurrentY(0);
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-[1000] bg-black flex items-center justify-center animate-in fade-in zoom-in duration-300"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      <video 
+        autoPlay 
+        controls 
+        className="w-full h-full max-h-screen object-contain"
+        style={{ transform: `translateY(${currentY - startY}px)` }}
+      >
+        <source src={url} type="video/mp4" />
+      </video>
+      <button 
+        onClick={onClose}
+        className="absolute top-8 right-8 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white border border-white/10 z-50"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[9px] font-mono text-white/40 uppercase tracking-widest pointer-events-none animate-pulse">
+        Arraste para fechar
       </div>
     </div>
   );
 };
 
-const DocItem = ({ doc, isAudioEnabled }: any) => {
+const DocItem = ({ doc, onExpand }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-
-  useEffect(() => {
-    const handleOtherPlay = (e: any) => {
-      if (e.detail.id !== doc.id && videoRef.current) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    };
-
-    window.addEventListener('video-playing', handleOtherPlay);
-    return () => window.removeEventListener('video-playing', handleOtherPlay);
-  }, [doc.id]);
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -182,24 +261,45 @@ const DocItem = ({ doc, isAudioEnabled }: any) => {
   };
 
   return (
-    <div 
-      className="group relative aspect-video bg-slate-900 border border-white/5 overflow-hidden shadow-xl rounded-sm cursor-pointer"
-      onClick={togglePlay}
-    >
+    <div className="group relative aspect-video bg-slate-900 border border-white/5 overflow-hidden shadow-xl rounded-sm">
        <video 
         ref={videoRef} 
         loop 
         muted 
         playsInline 
+        poster={doc.poster}
         className={`w-full h-full object-cover transition-opacity duration-700 pointer-events-none ${isPlaying ? 'opacity-100' : 'opacity-60'}`}
        >
           <source src={doc.url} type="video/mp4" />
        </video>
-       <div className={`absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500 ${isPlaying ? 'bg-transparent opacity-0' : ''}`}></div>
+       
+       <div className={`absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}></div>
        
        <div className="absolute bottom-6 left-6 text-left pointer-events-none">
           <div className="text-[8px] font-mono text-violet-400 mb-1">{doc.tag}</div>
           <div className="text-xl font-bold italic text-white uppercase tracking-tighter">{doc.title}</div>
+       </div>
+
+       {/* Botões de Ação no Card */}
+       <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          <button 
+            onClick={togglePlay}
+            className="w-14 h-14 bg-violet-600 rounded-full flex items-center justify-center text-white shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500"
+          >
+            {isPlaying ? (
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            ) : (
+              <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            )}
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onExpand(); }}
+            className="w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          </button>
        </div>
     </div>
   );
