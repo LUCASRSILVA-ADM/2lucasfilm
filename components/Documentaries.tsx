@@ -1,46 +1,196 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
-const Documentaries: React.FC = () => {
+interface DocumentariesProps {
+  isAudioEnabled: boolean;
+}
+
+const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mainVideoRef = useRef<HTMLVideoElement>(null);
+  const mainId = "main-doc-video";
+
+  const docs = [
+    {
+      id: "main-doc",
+      title: "Além Da Linha de Chegada",
+      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769190488/treiler_2_tct9i7.mp4",
+      tag: "ORIGINAL DOC"
+    },
+    {
+      id: "decor-campinas",
+      title: "DECOR CAMPINAS",
+      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769630358/DECOR_CAMPINAS_tezxa2.mp4",
+      tag: "INTERIOR FILM"
+    },
+    {
+      id: "lentes-viagem",
+      title: "Lentes de Viagem",
+      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769631026/DDSD_nqo13r.mp4",
+      tag: "BEHIND THE SCENES"
+    }
+  ];
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.3 }
+    );
+
+    if (containerRef.current) observer.observe(containerRef.current);
+
+    const handleOtherPlay = (e: any) => {
+      if (e.detail.id !== mainId && mainVideoRef.current) {
+        mainVideoRef.current.pause();
+      }
+    };
+
+    window.addEventListener('video-playing', handleOtherPlay);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('video-playing', handleOtherPlay);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mainVideoRef.current) {
+      if (isVisible && !isExpanded) {
+        mainVideoRef.current.muted = !isAudioEnabled;
+        mainVideoRef.current.play().catch(() => {});
+        window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: mainId } }));
+      } else {
+        mainVideoRef.current.pause();
+      }
+    }
+  }, [isVisible, isAudioEnabled, isExpanded]);
+
   return (
-    <div className="py-24 px-6 container mx-auto max-w-7xl">
+    <div ref={containerRef} className="py-24 px-6 container mx-auto max-w-7xl">
       <div className="space-y-4 mb-16">
         <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white">
-          Sessão <span className="text-violet-500">Documentários</span>
+          <span className="text-violet-500">Documentários</span>
         </h2>
         <div className="h-[2px] w-24 bg-violet-600"></div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <div className="group relative aspect-video w-full bg-slate-900 overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(139,92,246,0.1)]">
-          <video 
-            loop 
-            muted 
-            autoPlay 
-            playsInline
-            className="w-full h-full object-cover brightness-50 group-hover:brightness-90 transition-all duration-1000"
-          >
-            <source src="https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769190488/treiler_2_tct9i7.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80 pointer-events-none"></div>
-          
-          <div className="absolute bottom-10 left-10 space-y-3 pointer-events-none">
-            <div className="font-mono text-[9px] text-violet-500 uppercase tracking-[0.6em] animate-pulse">FEATURED PRODUCTION</div>
-            <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">
-              Além Da Linha <br/> de Chegada
-            </h3>
+      <div className="space-y-12">
+        {/* Principal */}
+        <div className="max-w-5xl mx-auto">
+          <div className="group relative aspect-video w-full bg-slate-900 overflow-hidden border border-white/10 shadow-2xl transition-transform duration-700 hover:scale-[1.01]">
+            <video 
+              ref={mainVideoRef}
+              loop 
+              muted={!isAudioEnabled} 
+              autoPlay 
+              playsInline
+              onPlay={() => window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: mainId } }))}
+              className="w-full h-full object-cover brightness-75 group-hover:brightness-100 transition-all duration-1000"
+            >
+              <source src={docs[0].url} type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80 pointer-events-none"></div>
+            <div className="absolute bottom-8 left-8 space-y-2 pointer-events-none">
+              <div className="font-mono text-[9px] text-violet-500 uppercase tracking-[0.6em]">{docs[0].tag}</div>
+              <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-none">
+                {docs[0].title}
+              </h3>
+            </div>
           </div>
-          
-          {/* Interaction Indicator */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-             <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                   <path d="M8 5v14l11-7z" />
-                </svg>
-             </div>
+        </div>
+
+        {/* Expansível */}
+        <div className="max-w-5xl mx-auto text-center">
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="group inline-flex items-center gap-4 px-10 py-5 bg-white/5 border border-white/10 hover:border-violet-500 hover:bg-violet-600/10 transition-all duration-500 rounded-full"
+          >
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.4em] text-white">
+              {isExpanded ? 'Recolher Galeria' : 'Mais Produções'}
+            </span>
+            <div className={`transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`}>
+              <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 transition-all duration-1000 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100 mt-16' : 'max-h-0 opacity-0 overflow-hidden mt-0'}`}>
+            {docs.slice(1).map((doc, idx) => (
+              <DocItem key={idx} doc={doc} isAudioEnabled={isAudioEnabled} parentExpanded={isExpanded} />
+            ))}
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+const DocItem = ({ doc, isAudioEnabled, parentExpanded }: any) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const handleOtherPlay = (e: any) => {
+      if (e.detail.id !== doc.id && videoRef.current) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    };
+
+    window.addEventListener('video-playing', handleOtherPlay);
+    return () => window.removeEventListener('video-playing', handleOtherPlay);
+  }, [doc.id]);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        // Envia evento global para pausar outros vídeos antes de iniciar
+        window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: doc.id } }));
+        videoRef.current.muted = !isAudioEnabled;
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  return (
+    <div 
+      className="group relative aspect-video bg-slate-900 border border-white/5 overflow-hidden shadow-xl rounded-sm cursor-pointer"
+      onClick={togglePlay}
+    >
+       <video 
+        ref={videoRef} 
+        loop 
+        muted={!isAudioEnabled} 
+        playsInline 
+        className={`w-full h-full object-cover transition-opacity duration-700 ${isPlaying ? 'opacity-100' : 'opacity-60'}`}
+       >
+          <source src={doc.url} type="video/mp4" />
+       </video>
+       <div className={`absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500 ${isPlaying ? 'bg-transparent opacity-0' : ''}`}></div>
+       
+       {!isPlaying && (
+         <div className="absolute inset-0 flex items-center justify-center z-10">
+           <div className="w-16 h-16 rounded-full bg-violet-600/80 flex items-center justify-center text-white shadow-xl transform group-hover:scale-110 transition-transform">
+             <svg className="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+             </svg>
+           </div>
+         </div>
+       )}
+
+       <div className="absolute bottom-6 left-6 text-left pointer-events-none">
+          <div className="text-[8px] font-mono text-violet-400 mb-1">{doc.tag}</div>
+          <div className="text-xl font-bold italic text-white uppercase tracking-tighter">{doc.title}</div>
+       </div>
     </div>
   );
 };
