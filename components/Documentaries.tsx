@@ -21,28 +21,28 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
       id: "main-doc",
       title: "Além Da Linha de Chegada",
       url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769190488/treiler_2_tct9i7.mp4",
-      poster: "https://res.cloudinary.com/dkzx2kuuu/image/upload/v1769632033/1_ljrbig.png",
+      poster: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769190488/treiler_2_tct9i7.jpg",
       tag: "ORIGINAL DOC"
     },
     {
       id: "trip-italia",
       title: "TRIP ITALIA",
       url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769623637/NLJ_ddeqxn.mp4",
-      poster: "https://res.cloudinary.com/dkzx2kuuu/image/upload/v1769632869/1-homepage-1_t57lle.jpg",
+      poster: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769623637/NLJ_ddeqxn.jpg",
       tag: "TRAVEL FILM"
     },
     {
       id: "decor-campinas",
       title: "DECOR CAMPINAS",
-      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769644373/YTDowncom_Shorts_Suite-Room-Interior-interiordesign-hotel_Media_C4q5DZZMbIE_001_720p_j3sy6s.mp4",
-      poster: "https://res.cloudinary.com/dkzx2kuuu/image/upload/v1769632036/2_b8rrjr.png",
+      url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769630358/DECOR_CAMPINAS_tezxa2.mp4",
+      poster: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769630358/DECOR_CAMPINAS_tezxa2.jpg",
       tag: "INTERIOR FILM"
     },
     {
       id: "lentes-viagem",
       title: "Lentes de Viagem",
       url: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769631026/DDSD_nqo13r.mp4",
-      poster: "https://images.unsplash.com/photo-1492691523567-6170f0295da4?auto=format&fit=crop&q=80&w=1200",
+      poster: "https://res.cloudinary.com/dkzx2kuuu/video/upload/v1769631026/DDSD_nqo13r.jpg",
       tag: "BEHIND THE SCENES"
     }
   ];
@@ -72,7 +72,7 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
     };
   }, []);
 
-  // Lógica de Autoplay, Áudio e Auto-Hide
+  // Lógica de Autoplay, Áudio e Auto-Hide do Player Principal
   useEffect(() => {
     if (mainVideoRef.current) {
       if (isFullyVisible) {
@@ -83,7 +83,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
           playPromise.then(() => {
             window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: mainId } }));
             
-            // Inicia timer para sumir texto após 3 segundos
             if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
             hideTimerRef.current = setTimeout(() => {
               setShowMainText(false);
@@ -134,7 +133,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
               <source src={docs[0].url} type="video/mp4" />
             </video>
             
-            {/* Gradiente e Textos com Auto-Hide */}
             <div className={`absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent transition-opacity duration-1000 ${showMainText ? 'opacity-80' : 'opacity-0'}`}></div>
             
             <div className={`absolute bottom-8 left-8 space-y-2 pointer-events-none transition-all duration-1000 ${showMainText ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
@@ -144,7 +142,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
               </h3>
             </div>
             
-            {/* Controles Flutuantes */}
             <div className={`absolute top-4 right-4 z-20 flex gap-2 transition-opacity duration-1000 ${showMainText ? 'opacity-100' : 'opacity-0'}`}>
               <button 
                 onClick={() => {
@@ -156,9 +153,10 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                 </svg>
               </button>
+              {/* Botão de Expandir oculto no mobile */}
               <button 
                 onClick={() => setFullscreenVideo(docs[0].url)}
-                className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/10 hover:bg-violet-600 transition-colors"
+                className="hidden md:flex w-10 h-10 bg-black/40 backdrop-blur-md rounded-full items-center justify-center text-white border border-white/10 hover:bg-violet-600 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -192,7 +190,6 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
         </div>
       </div>
 
-      {/* Fullscreen Overlay com Gesto de Fechar */}
       {fullscreenVideo && (
         <FullscreenPlayer url={fullscreenVideo} onClose={() => setFullscreenVideo(null)} />
       )}
@@ -201,30 +198,9 @@ const Documentaries: React.FC<DocumentariesProps> = ({ isAudioEnabled }) => {
 };
 
 const FullscreenPlayer = ({ url, onClose }: { url: string; onClose: () => void }) => {
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-
-  const onTouchStart = (e: React.TouchEvent) => setStartY(e.touches[0].clientY);
-  const onTouchMove = (e: React.TouchEvent) => setCurrentY(e.touches[0].clientY);
-  const onTouchEnd = () => {
-    if (Math.abs(currentY - startY) > 100) onClose();
-    setStartY(0);
-    setCurrentY(0);
-  };
-
   return (
-    <div 
-      className="fixed inset-0 z-[1000] bg-black flex items-center justify-center animate-in fade-in zoom-in duration-300"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      <video 
-        autoPlay 
-        controls 
-        className="w-full h-full max-h-screen object-contain"
-        style={{ transform: `translateY(${currentY - startY}px)` }}
-      >
+    <div className="fixed inset-0 z-[1000] bg-black flex items-center justify-center animate-in fade-in zoom-in duration-300">
+      <video autoPlay controls className="w-full h-full max-h-screen object-contain">
         <source src={url} type="video/mp4" />
       </video>
       <button 
@@ -235,9 +211,6 @@ const FullscreenPlayer = ({ url, onClose }: { url: string; onClose: () => void }
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[9px] font-mono text-white/40 uppercase tracking-widest pointer-events-none animate-pulse">
-        Arraste para fechar
-      </div>
     </div>
   );
 };
@@ -245,6 +218,8 @@ const FullscreenPlayer = ({ url, onClose }: { url: string; onClose: () => void }
 const DocItem = ({ doc, onExpand }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showText, setShowText] = useState(true);
+  const itemHideTimerRef = useRef<any>(null);
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -252,16 +227,48 @@ const DocItem = ({ doc, onExpand }: any) => {
       if (isPlaying) {
         videoRef.current.pause();
         setIsPlaying(false);
+        setShowText(true);
+        if (itemHideTimerRef.current) clearTimeout(itemHideTimerRef.current);
       } else {
         window.dispatchEvent(new CustomEvent('video-playing', { detail: { id: doc.id } }));
         videoRef.current.play().catch(() => {});
         setIsPlaying(true);
+        
+        // Timer de 3 segundos para sumir o texto do card
+        if (itemHideTimerRef.current) clearTimeout(itemHideTimerRef.current);
+        itemHideTimerRef.current = setTimeout(() => {
+          setShowText(false);
+        }, 3000);
       }
     }
   };
 
+  useEffect(() => {
+    const handleOtherPlay = (e: any) => {
+      if (e.detail.id !== doc.id && videoRef.current) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+        setShowText(true);
+        if (itemHideTimerRef.current) clearTimeout(itemHideTimerRef.current);
+      }
+    };
+    window.addEventListener('video-playing', handleOtherPlay);
+    return () => {
+      window.removeEventListener('video-playing', handleOtherPlay);
+      if (itemHideTimerRef.current) clearTimeout(itemHideTimerRef.current);
+    };
+  }, [doc.id]);
+
   return (
-    <div className="group relative aspect-video bg-slate-900 border border-white/5 overflow-hidden shadow-xl rounded-sm">
+    <div 
+      className="group relative aspect-video bg-slate-900 border border-white/5 overflow-hidden shadow-xl rounded-sm"
+      onMouseEnter={() => setShowText(true)}
+      onMouseLeave={() => {
+        if (isPlaying) {
+          itemHideTimerRef.current = setTimeout(() => setShowText(false), 2000);
+        }
+      }}
+    >
        <video 
         ref={videoRef} 
         loop 
@@ -273,15 +280,14 @@ const DocItem = ({ doc, onExpand }: any) => {
           <source src={doc.url} type="video/mp4" />
        </video>
        
-       <div className={`absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}></div>
+       <div className={`absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-1000 ${isPlaying && !showText ? 'opacity-0' : 'opacity-100'}`}></div>
        
-       <div className="absolute bottom-6 left-6 text-left pointer-events-none">
+       <div className={`absolute bottom-6 left-6 text-left pointer-events-none transition-all duration-1000 ${showText ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="text-[8px] font-mono text-violet-400 mb-1">{doc.tag}</div>
           <div className="text-xl font-bold italic text-white uppercase tracking-tighter">{doc.title}</div>
        </div>
 
-       {/* Botões de Ação no Card */}
-       <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+       <div className={`absolute inset-0 flex items-center justify-center gap-4 transition-opacity duration-500 ${showText || !isPlaying ? 'opacity-100' : 'opacity-0'}`}>
           <button 
             onClick={togglePlay}
             className="w-14 h-14 bg-violet-600 rounded-full flex items-center justify-center text-white shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500"
@@ -292,9 +298,10 @@ const DocItem = ({ doc, onExpand }: any) => {
               <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             )}
           </button>
+          {/* Ocultar expandir no mobile */}
           <button 
             onClick={(e) => { e.stopPropagation(); onExpand(); }}
-            className="w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500"
+            className="hidden md:flex w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full items-center justify-center text-white shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
